@@ -95,11 +95,52 @@ def section_2_top5_daily_audience(df: pd.DataFrame) -> None:
     insight("(여기에 이 그래프로 알 수 있는 것을 한 문장으로 적어 주세요.)")
 
 
+def section_3_daily_total_area(df: pd.DataFrame) -> None:
+    st.subheader("3. 날짜별 10위권 일관객 합계")
+    st.caption("그날 10위권 영화들의 일관객을 모두 더한 값이에요. 합계가 가장 컸던 3일을 표시했어요.")
+
+    daily = df.groupby("날짜", as_index=False)["일관객"].sum()
+    daily = daily.rename(columns={"일관객": "10위권 합계"}).sort_values("날짜")
+
+    fig = px.area(
+        daily,
+        x="날짜",
+        y="10위권 합계",
+        title="날짜별 10위권 일관객 합계",
+        labels={"날짜": "날짜", "10위권 합계": "10위권 일관객 합계(명)"},
+    )
+    fig.update_traces(
+        hovertemplate="<b>%{x|%Y-%m-%d}</b><br>10위권 합계: %{y:,}명<extra></extra>"
+    )
+
+    # 합계가 가장 컸던 3일: 점으로 찍고 날짜를 적기
+    top3 = daily.nlargest(3, "10위권 합계").sort_values("날짜")
+    fig.add_scatter(
+        x=top3["날짜"],
+        y=top3["10위권 합계"],
+        mode="markers+text",
+        text=top3["날짜"].dt.strftime("%Y-%m-%d"),
+        # 날짜가 가까운 날끼리 글자가 겹치지 않도록 왼쪽/가운데/오른쪽으로 나눔
+        textposition=["top left", "top center", "top right"][: len(top3)],
+        textfont=dict(size=13),
+        marker=dict(size=11, color="crimson", line=dict(width=2, color="white")),
+        cliponaxis=False,
+        showlegend=False,
+        hovertemplate="<b>%{x|%Y-%m-%d}</b><br>10위권 합계: %{y:,}명<extra></extra>",
+    )
+    # 글자가 그래프 밖으로 잘리지 않도록 위쪽 여유를 둠
+    fig.update_yaxes(range=[0, daily["10위권 합계"].max() * 1.18], tickformat=",")
+    st.plotly_chart(fig)
+
+    insight("(여기에 이 그래프로 알 수 있는 것을 한 문장으로 적어 주세요.)")
+
+
 # 구역 목록: (표시할 이름, 그려 주는 함수)
 SECTIONS = [
     ("일관객 변화", section_1_daily_audience),
     ("상위 5편 비교", section_2_top5_daily_audience),
-    # ("새 그래프 이름", section_3_...),
+    ("날짜별 합계", section_3_daily_total_area),
+    # ("새 그래프 이름", section_4_...),
 ]
 
 

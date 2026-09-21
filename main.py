@@ -65,10 +65,41 @@ def section_1_daily_audience(df: pd.DataFrame) -> None:
     insight("(여기에 이 그래프로 알 수 있는 것을 한 문장으로 적어 주세요.)")
 
 
+def section_2_top5_daily_audience(df: pd.DataFrame) -> None:
+    st.subheader("2. 일관객 합계 상위 5편 비교")
+    st.caption("범례의 영화 이름을 누르면 그 영화를 끄고 켤 수 있어요. 더블클릭하면 그 영화만 남아요.")
+
+    # 기간 전체 일관객 합계가 가장 큰 5편
+    top5 = df.groupby("영화명")["일관객"].sum().nlargest(5).index.tolist()
+    top_df = df[df["영화명"].isin(top5)].sort_values("날짜")
+
+    fig = px.line(
+        top_df,
+        x="날짜",
+        y="일관객",
+        color="영화명",
+        category_orders={"영화명": top5},  # 합계 순서대로 범례 정렬
+        title="일관객 합계 상위 5편 - 날짜별 일관객",
+        labels={"날짜": "날짜", "일관객": "일관객(명)", "영화명": "영화"},
+    )
+    fig.update_traces(
+        hovertemplate=(
+            "<b>%{fullData.name}</b><br>"
+            "%{x|%Y-%m-%d}<br>"
+            "일관객: %{y:,}명<extra></extra>"
+        )
+    )
+    fig.update_layout(yaxis_tickformat=",", legend_title_text="영화 (클릭해서 켜고 끄기)")
+    st.plotly_chart(fig)
+
+    insight("(여기에 이 그래프로 알 수 있는 것을 한 문장으로 적어 주세요.)")
+
+
 # 구역 목록: (표시할 이름, 그려 주는 함수)
 SECTIONS = [
     ("일관객 변화", section_1_daily_audience),
-    # ("새 그래프 이름", section_2_...),
+    ("상위 5편 비교", section_2_top5_daily_audience),
+    # ("새 그래프 이름", section_3_...),
 ]
 
 

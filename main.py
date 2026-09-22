@@ -169,13 +169,50 @@ def section_4_top10_total_bar(df: pd.DataFrame) -> None:
     insight("(여기에 이 그래프로 알 수 있는 것을 한 문장으로 적어 주세요.)")
 
 
+def section_5_month_weekday_heatmap(df: pd.DataFrame) -> None:
+    st.subheader("5. 월×요일별 일관객 합계 히트맵")
+    st.caption("색이 진할수록 그 월·요일의 일관객 합계가 많다는 뜻이에요.")
+
+    tmp = df.copy()
+    tmp["월"] = tmp["날짜"].dt.month
+    weekday_order = ["월", "화", "수", "목", "금", "토", "일"]
+    weekday_map = dict(zip(range(7), weekday_order))  # 0=월요일 ... 6=일요일
+    tmp["요일"] = tmp["날짜"].dt.weekday.map(weekday_map)
+
+    pivot = (
+        tmp.groupby(["월", "요일"])["일관객"]
+        .sum()
+        .unstack("요일")
+        .reindex(columns=weekday_order)  # 월요일부터 일요일 순서로
+        .sort_index()  # 1월부터 12월 순서로
+    )
+
+    fig = px.imshow(
+        pivot,
+        x=pivot.columns,
+        y=[f"{m}월" for m in pivot.index],
+        color_continuous_scale="Reds",
+        aspect="auto",
+        title="월×요일별 일관객 합계",
+        labels={"x": "요일", "y": "월", "color": "일관객 합계"},
+    )
+    fig.update_traces(
+        hovertemplate="%{y} %{x}요일<br>일관객 합계: %{z:,}명<extra></extra>"
+    )
+    fig.update_layout(coloraxis_colorbar_tickformat=",")
+    st.plotly_chart(fig)
+
+    insight("(여기에 이 그래프로 알 수 있는 것을 한 문장으로 적어 주세요.)")
+
+
 # 구역 목록: (표시할 이름, 그려 주는 함수)
 SECTIONS = [
     ("일관객 변화", section_1_daily_audience),
     ("상위 5편 비교", section_2_top5_daily_audience),
     ("날짜별 합계", section_3_daily_total_area),
     ("합계 TOP 10", section_4_top10_total_bar),
-    # ("새 그래프 이름", section_5_...),
+    ("월×요일 히트맵", section_5_month_weekday_heatmap),
+    # ("새 그래프 이름", section_6_...),
 ]
 
 

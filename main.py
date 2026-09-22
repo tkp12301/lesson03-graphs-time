@@ -135,12 +135,47 @@ def section_3_daily_total_area(df: pd.DataFrame) -> None:
     insight("(여기에 이 그래프로 알 수 있는 것을 한 문장으로 적어 주세요.)")
 
 
+def section_4_top10_total_bar(df: pd.DataFrame) -> None:
+    st.subheader("4. 일관객 합계 TOP 10")
+    st.caption("막대에 마우스를 올리면 10위권에 든 날수도 함께 보여요.")
+
+    summary = (
+        df.groupby("영화명")
+        .agg(일관객합계=("일관객", "sum"), 순위진입일수=("날짜", "nunique"))
+        .nlargest(10, "일관객합계")
+        .sort_values("일관객합계")  # 가장 큰 값이 위로 오도록(오름차순으로 넣으면 plotly가 아래->위로 그림)
+        .reset_index()
+    )
+
+    fig = px.bar(
+        summary,
+        x="일관객합계",
+        y="영화명",
+        orientation="h",
+        title="일관객 합계 TOP 10",
+        labels={"일관객합계": "일관객 합계(명)", "영화명": "영화"},
+        custom_data=["순위진입일수"],
+    )
+    fig.update_traces(
+        hovertemplate=(
+            "<b>%{y}</b><br>"
+            "일관객 합계: %{x:,}명<br>"
+            "10위권 진입 날수: %{customdata[0]}일<extra></extra>"
+        )
+    )
+    fig.update_layout(xaxis_tickformat=",")
+    st.plotly_chart(fig)
+
+    insight("(여기에 이 그래프로 알 수 있는 것을 한 문장으로 적어 주세요.)")
+
+
 # 구역 목록: (표시할 이름, 그려 주는 함수)
 SECTIONS = [
     ("일관객 변화", section_1_daily_audience),
     ("상위 5편 비교", section_2_top5_daily_audience),
     ("날짜별 합계", section_3_daily_total_area),
-    # ("새 그래프 이름", section_4_...),
+    ("합계 TOP 10", section_4_top10_total_bar),
+    # ("새 그래프 이름", section_5_...),
 ]
 
 
